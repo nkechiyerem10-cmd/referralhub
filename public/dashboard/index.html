@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReferralHub - Your Dashboard</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<script src="https://www.gstatic.com/firebasejs/9.25.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.25.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.25.0/firebase-firestore-compat.js"></script>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-blue: #0B5CFF;
+  --navy-dark: #0e1525;
+  --navy-medium: #1a2236;
+  --accent-purple: #6366f1;
+  --text-light: #ffffff;
+  --text-gray: #e2e8f0;
+  --success-green: #10b981;
+  --error-red: #ef4444;
+  --warning-orange: #f59e0b;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+.animated-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: linear-gradient(-45deg, #0e1525, #1a2236, #0B5CFF, #6366f1);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Navigation */
+nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: rgba(14, 21, 37, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 1rem 0;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.nav-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-light);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-blue), var(--accent-purple));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.cta-nav {
+  background: var(--primary-blue);
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.cta-nav:hover {
+  background: #0948d4;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(11, 92, 255, 0.4);
+}
+
+/* Main Content */
+.main-content {
+  padding: 100px 2rem 60px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Welcome Section */
+.welcome-section {
+  text-align: center;
+  padding: 3rem 0 4rem;
+  opacity: 0;
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+.welcome-section h1 {
+  font-size: 3rem;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
+.welcome-section p {
+  font-size: 1.2rem;
+  color: var(--text-gray);
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+  opacity: 0;
+  animation: fadeInUp 1s ease 0.2s forwards;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-blue), var(--accent-purple));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.6s ease;
+}
+
+.stat-card:hover::before {
+  transform: scaleX(1);
+}
+
+.stat-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(11, 92, 255, 0.3);
+  border-color: rgba(11, 92, 255, 0.4);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.stat-card.blue .stat-icon {
+  background: rgba(11, 92, 255, 0.2);
+  color: var(--primary-blue);
+}
+
+.stat-card.green .stat-icon {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success-green);
+}
+
+.stat-card.purple .stat-icon {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--accent-purple);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--text-gray);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
+.stat-change {
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.stat-change.positive {
+  color: var(--success-green);
+}
+
+/* Form Section */
+.add-referral-section {
+  margin-bottom: 3rem;
+  opacity: 0;
+  animation: fadeInUp 1s ease 0.4s forwards;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.section-header h2 {
+  font-size: 2rem;
+  color: var(--text-light);
+}
+
+.section-icon {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, var(--primary-blue), var(--accent-purple));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.form-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  max-width: 700px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  color: var(--text-light);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-light);
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.form-group input::placeholder {
+  color: rgba(226, 232, 240, 0.5);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(11, 92, 255, 0.1);
+}
+
+.submit-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--primary-blue), var(--accent-purple));
+  color: white;
+  padding: 1.2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(11, 92, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px rgba(11, 92, 255, 0.5);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Messages */
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--error-red);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  color: var(--error-red);
+  display: none;
+  animation: shake 0.5s ease;
+}
+
+.error-message.show {
+  display: block;
+}
+
+.success-banner {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--success-green);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--success-green);
+  display: none;
+  animation: slideDown 0.5s ease;
+}
+
+.success-banner.show {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Referral List */
+.referral-list-section {
+  opacity: 0;
+  animation: fadeInUp 1s ease 0.6s forwards;
+}
+
+.referral-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.referral-item {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.referral-item:hover {
+  transform: translateX(8px);
+  border-color: rgba(11, 92, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(11, 92, 255, 0.2);
+}
+
+.referral-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.referral-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-purple), var(--primary-blue));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.referral-details h4 {
+  color: var(--text-light);
+  font-size: 1.1rem;
+  margin-bottom: 0.2rem;
+}
+
+.referral-details p {
+  color: var(--text-gray);
+  font-size: 0.9rem;
+}
+
+.referral-status {
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-pending {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--warning-orange);
+  border: 1px solid var(--warning-orange);
+}
+
+.status-active {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success-green);
+  border: 1px solid var(--success-green);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-gray);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  color: var(--text-light);
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Loading State */
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-skeleton {
+  background: rgba(255, 255, 255, 0.05);
+  height: 80px;
+  border-radius: 16px;
+  margin-bottom: 1rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .welcome-section h1 {
+    font-size: 2rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .referral-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .referral-status {
+    align-self: flex-start;
+  }
+}
+</style>
+</head>
+<body>
+<div class="animated-bg"></div>
+
+<nav>
+  <div class="nav-container">
+    <a href="#" class="logo">
+      <span>🚀</span>
+      ReferralHub
+    </a>
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">U</div>
+      <button id="logoutBtn" class="cta-nav">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <section class="welcome-section">
+    <h1>Welcome back, <span id="userName">User</span>! 👋</h1>
+    <p>Here's how your referral network is performing</p>
+  </section>
+
+  <section class="stats-grid">
+    <div class="stat-card blue">
+      <div class="stat-icon">👥</div>
+      <div class="stat-label">Total Referrals</div>
+      <div class="stat-value" id="totalReferrals">0</div>
+      <div class="stat-change positive">
+        <span>↑</span> Growing strong
+      </div>
+    </div>
+
+    <div class="stat-card green">
+      <div class="stat-icon">💰</div>
+      <div class="stat-label">Total Earnings</div>
+      <div class="stat-value" id="totalEarnings">₦0</div>
+      <div class="stat-change positive">
+        <span>↑</span> Keep it up
+      </div>
+    </div>
+
+    <div class="stat-card purple">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-label">Active This Month</div>
+      <div class="stat-value" id="monthlyActive">0</div>
+      <div class="stat-change">
+        This period
+      </div>
+    </div>
+  </section>
+
+  <section class="add-referral-section">
+    <div class="section-header">
+      <div class="section-icon">➕</div>
+      <h2>Add New Referral</h2>
+    </div>
+
+    <div class="form-card">
+      <div id="successBanner" class="success-banner">
+        <span>✅</span>
+        <span>Referral added successfully!</span>
+      </div>
+      
+      <div id="refError" class="error-message"></div>
+      
+      <form id="refForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="refName">Full Name *</label>
+            <input type="text" id="refName" placeholder="Jane Doe" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="refEmail">Email Address *</label>
+            <input type="email" id="refEmail" placeholder="jane@example.com" required>
+          </div>
+        </div>
+        
+        <button type="submit" class="submit-btn" id="addRefBtn">
+          <span id="addBtnText">Add Referral</span>
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <section class="referral-list-section">
+    <div class="section-header">
+      <div class="section-icon">📋</div>
+      <h2>Your Referrals</h2>
+    </div>
+
+    <div class="referral-list" id="referralList">
+      <div class="loading-skeleton"></div>
+      <div class="loading-skeleton"></div>
+      <div class="loading-skeleton"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+// Firebase Configuration - Replace with your config
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// DOM Elements
+const userNameEl = document.getElementById('userName');
+const userAvatarEl = document.getElementById('userAvatar');
+const totalReferralsEl = document.getElementById('totalReferrals');
+const totalEarningsEl = document.getElementById('totalEarnings');
+const monthlyActiveEl = document.getElementById('monthlyActive');
+const refForm = document.getElementById('refForm');
+const addRefBtn = document.getElementById('addRefBtn');
+const addBtnText = document.getElementById('addBtnText');
+const refError = document.getElementById('refError');
+const successBanner = document.getElementById('successBanner');
+const referralList = document.getElementById('referralList');
+const logoutBtn = document.getElementById('logoutBtn');
+
+let currentUser = null;
+
+// Check authentication
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = 'index.html';
+    return;
+  }
+  
+  currentUser = user;
+  await loadUserData();
+  await loadReferrals();
+});
+
+// Load user data
+async function loadUserData() {
+  try {
+    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+    
+    if (userDoc.exists) {
+      const userData = userDoc.data();
+      const firstName = userData.fullName.split(' ')[0];
+      
+      userNameEl.textContent = firstName;
+      userAvatarEl.textContent = firstName.charAt(0).toUpperCase();
+      totalReferralsEl.textContent = userData.totalReferrals || 0;
+      totalEarningsEl.textContent = `₦${(userData.totalEarnings || 0).toLocaleString()}`;
+      
+      // Calculate monthly active (referrals from this month)
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      
+      const monthlySnapshot = await db.collection('referrals')
+        .where('userId', '==', currentUser.uid)
+        .where('createdAt', '>=', monthStart)
+        .get();
+      
+      monthlyActiveEl.textContent = monthlySnapshot.size;
+    }
+  } catch (error) {
+    console.error('Error loading user data:', error);
+  }
+}
+
+// Load referrals
+async function loadReferrals() {
+  try {
+    const snapshot = await db.collection('referrals')
+      .where('userId', '==', currentUser.uid)
+      .orderBy('createdAt', 'desc')
+      .get();
+    
+    if (snapshot.empty) {
+      referralList.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <h3>No referrals yet</h3>
+          <p>Add your first referral above to get started!</p>
+        </div>
+      `;
+      return;
+    }
+    
+    referralList.innerHTML = '';
+    
+    snapshot.forEach(doc => {
+      const ref = doc.data();
+      const initial = ref.name.charAt(0).toUpperCase();
+      const statusClass = ref.status === 'active' ? 'status-active' : 'status-pending';
+      const statusText = ref.status === 'active' ? 'Active' : 'Pending';
+      
+      const refItem = document.createElement('div');
+      refItem.className = 'referral-item';
+      refItem.innerHTML = `
+        <div class="referral-info">
+          <div class="referral-avatar">${initial}</div>
+          <div class="referral-details">
+            <h4>${ref.name}</h4>
+            <p>${ref.email}</p>
+          </div>
+        </div>
+        <div class="referral-status ${statusClass}">${statusText}</div>
+      `;
+      
+      referralList.appendChild(refItem);
+    });
+  } catch (error) {
+    console.error('Error loading referrals:', error);
+    referralList.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <h3>Error loading referrals</h3>
+        <p>Please refresh the page to try again.</p>
+      </div>
+    `;
+  }
+}
+
+// Show error message
+function showError(message) {
+  refError.textContent = `⚠ ${message}`;
+  refError.classList.add('show');
+  setTimeout(() => refError.classList.remove('show'), 5000);
+}
+
+// Show success banner
+function showSuccess() {
+  successBanner.classList.add('show');
+  setTimeout(() => successBanner.classList.remove('show'), 4000);
+}
+
+// Clear messages
+function clearMessages() {
+  refError.classList.remove('show');
+  successBanner.classList.remove('show');
+}
+
+// Set button loading state
+function setLoading(isLoading) {
+  addRefBtn.disabled = isLoading;
+  if (isLoading) {
+    addBtnText.innerHTML = 'Adding... <span class="spinner"></span>';
+  } else {
+    addBtnText.textContent = 'Add Referral';
+  }
+}
+
+// Add referral
+refForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearMessages();
+  
+  const name = document.getElementById('refName').value.trim();
+  const email = document.getElementById('refEmail').value.trim();
+  
+  if (!name || !email) {
+    showError('Please fill in all fields.');
+    return;
+  }
+  
+  setLoading(true);
+  
+  try {
+    // Check for duplicate email
+    const duplicateCheck = await db.collection('referrals')
+      .where('userId', '==', currentUser.uid)
+      .where('email', '==', email)
+      .get();
+    
+    if (!duplicateCheck.empty) {
+      showError('This email has already been referred by you.');
+      setLoading(false);
+      return;
+    }
+    
+    // Add referral
+    await db.collection('referrals').add({
+      userId: currentUser.uid,
+      name: name,
+      email: email,
+      status: 'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Update user stats
+    await db.collection('users').doc(currentUser.uid).update({
+      totalReferrals: firebase.firestore.FieldValue.increment(1)
+    });
+    
+    // Reset form
+    refForm.reset();
+    showSuccess();
+    
+    // Reload data
+    await loadUserData();
+    await loadReferrals();
+    
+  } catch (error) {
+    console.error('Error adding referral:', error);
+    showError('Failed to add referral. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+});
+
+// Logout
+logoutBtn.addEventListener('click', async () => {
+  try {
+    await auth.signOut();
+    window.location.href = 'index.html';
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+});
+
+// Clear errors on input
+document.getElementById('refName').addEventListener('input', clearMessages);
+document.getElementById('refEmail').addEventListener('input', clearMessages);
+</script>
+</body>
+</html>
