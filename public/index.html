@@ -504,7 +504,6 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // DOM Elements
-const authForm = document.getElementById('authForm');
 const authBtn = document.getElementById('authBtn');
 const btnText = document.getElementById('btnText');
 const authError = document.getElementById('authError');
@@ -515,6 +514,7 @@ const nameGroup = document.getElementById('nameGroup');
 const fullNameInput = document.getElementById('fullName');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
+const authForm = document.getElementById('authForm');
 
 let isSignupMode = true;
 
@@ -562,9 +562,17 @@ function setLoading(isLoading) {
   }
 }
 
-// Handle form submission
+// CRITICAL: Prevent form submission
+authForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  return false;
+});
+
+// Handle button click
 authBtn.addEventListener('click', async (e) => {
   e.preventDefault();
+  e.stopPropagation();
+  
   clearMessages();
 
   const email = emailInput.value.trim();
