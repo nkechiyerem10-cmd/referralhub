@@ -470,7 +470,7 @@ body {
         <input type="password" id="password" placeholder="Minimum 6 characters" required>
       </div>
       
-      <button type="submit" class="submit-btn" id="authBtn">
+      <button type="button" class="submit-btn" id="authBtn">
         <span id="btnText">Create Account</span>
       </button>
     </form>
@@ -562,8 +562,8 @@ function setLoading(isLoading) {
   }
 }
 
-// Form submission
-authForm.addEventListener('submit', async (e) => {
+// Handle form submission
+authBtn.addEventListener('click', async (e) => {
   e.preventDefault();
   clearMessages();
 
