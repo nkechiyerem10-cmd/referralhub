@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ReferralHub - Join the Network</title>
 <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/nkechiyerem10-cmd/referralhub/main/public/shuttle.png">
-<script defer src="https://www.gstatic.com/firebasejs/9.25.0/firebase-app-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/9.25.0/firebase-auth-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/9.25.0/firebase-firestore-compat.js"></script>
+<script src="/__/firebase/9.25.0/firebase-app-compat.js"></script>
+<script src="/__/firebase/9.25.0/firebase-auth-compat.js"></script>
+<script src="/__/firebase/9.25.0/firebase-firestore-compat.js"></script>
+<script src="/__/firebase/init.js"></script>
 <style>
 * {
   margin: 0;
@@ -487,7 +488,7 @@ body {
   </div>
 </section>
 
-<script defer>
+<script>
 // Firebase Configuration - Replace with your config
 const firebaseConfig = {
   apiKey: "AIzaSyACwTfO-Ri9E3JrzAlcAunl5yYPJCYZU4I",
@@ -562,91 +563,61 @@ function setLoading(isLoading) {
   }
 }
 
-// CRITICAL: Prevent form submission
-authForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  return false;
-});
 
-// Handle button click
-authBtn.addEventListener('click', async (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  
-  clearMessages();
 
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-  const fullName = fullNameInput.value.trim();
+// THIS ONE BLOCK HANDLES BOTH CLICKS AND THE "ENTER" KEY
+authForm.addEventListener('submit', async (e) => {
+    e.preventDefault(); // Stop the page from refreshing
+    
+    console.log("Form submitted! Logic starting..."); // This tells you it's working
+    clearMessages();
 
-  // Validation
-  if (isSignupMode && !fullName) {
-    showError('Please enter your full name.');
-    return;
-  }
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    const fullName = fullNameInput ? fullNameInput.value.trim() : '';
 
-  if (!email || !password) {
-    showError('Please fill in all required fields.');
-    return;
-  }
-
-  if (password.length < 6) {
-    showError('Password must be at least 6 characters long.');
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    if (isSignupMode) {
-      // Sign Up
-      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-      
-      // Save user data to Firestore
-      await db.collection('users').doc(userCredential.user.uid).set({
-        fullName: fullName,
-        email: email,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        totalReferrals: 0,
-        totalEarnings: 0
-      });
-
-      console.log('User registered:', userCredential.user.uid);
-    } else {
-      // Login
-      const userCredential = await auth.signInWithEmailAndPassword(email, password);
-      console.log('User logged in:', userCredential.user.uid);
+    // Validation
+    if (isSignupMode && !fullName) {
+        showError('Please enter your full name.');
+        return;
+    }
+    if (!email || !password) {
+        showError('Please fill in all fields.');
+        return;
     }
 
-    // Show success message
-    authForm.style.display = 'none';
-    authSuccess.classList.add('show');
+    setLoading(true);
 
-    // Redirect to dashboard
-    setTimeout(() => {
-      window.location.href = 'dashboard/index.html';
-    }, 2000);
+    try {
+        if (isSignupMode) {
+            console.log("Attempting Sign Up...");
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            
+            await db.collection('users').doc(userCredential.user.uid).set({
+                fullName: fullName,
+                email: email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                totalReferrals: 0,
+                totalEarnings: 0
+            });
+        } else {
+            console.log("Attempting Login...");
+            await auth.signInWithEmailAndPassword(email, password);
+        }
 
-  } catch (error) {
-    console.error('Auth error:', error);
-    
-    let errorMessage = 'An error occurred. Please try again.';
-    
-    if (error.code === 'auth/email-already-in-use') {
-      errorMessage = 'This email is already registered. Try logging in instead.';
-    } else if (error.code === 'auth/invalid-email') {
-      errorMessage = 'Please enter a valid email address.';
-    } else if (error.code === 'auth/weak-password') {
-      errorMessage = 'Password should be at least 6 characters long.';
-    } else if (error.code === 'auth/user-not-found') {
-      errorMessage = 'No account found with this email. Try signing up instead.';
-    } else if (error.code === 'auth/wrong-password') {
-      errorMessage = 'Incorrect password. Please try again.';
+        // SUCCESS!
+        authForm.style.display = 'none';
+        authSuccess.classList.add('show');
+
+        setTimeout(() => {
+            window.location.href = 'dashboard/index.html';
+        }, 2000);
+
+    } catch (error) {
+        console.error('Auth error detailed:', error.code);
+        showError(error.message); // This shows the real error on the screen
+        setLoading(false);
     }
-    
-    showError(errorMessage);
-    setLoading(false);
-  }
 });
 
 // Clear error on input
