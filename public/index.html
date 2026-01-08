@@ -470,7 +470,7 @@ body {
         <input type="password" id="password" placeholder="Minimum 6 characters" required>
       </div>
       
-      <button type="button" class="submit-btn" id="authBtn">
+      <button type="submit" class="submit-btn" id="authBtn">
         <span id="btnText">Create Account</span>
       </button>
     </form>
@@ -562,24 +562,17 @@ function setLoading(isLoading) {
   }
 }
 
-// CRITICAL: Prevent form submission
-authForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  return false;
-});
 
 // Handle button click
-authBtn.addEventListener('click', async (e) => {
+authForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  e.stopPropagation();
-  
+
   clearMessages();
 
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
   const fullName = fullNameInput.value.trim();
 
-  // Validation
   if (isSignupMode && !fullName) {
     showError('Please enter your full name.');
     return;
@@ -599,36 +592,28 @@ authBtn.addEventListener('click', async (e) => {
 
   try {
     if (isSignupMode) {
-      // Sign Up
-      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-      
-      // Save user data to Firestore
+      const userCredential =
+        await auth.createUserWithEmailAndPassword(email, password);
+
       await db.collection('users').doc(userCredential.user.uid).set({
-        fullName: fullName,
-        email: email,
+        fullName,
+        email,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         totalReferrals: 0,
         totalEarnings: 0
       });
-
-      console.log('User registered:', userCredential.user.uid);
     } else {
-      // Login
-      const userCredential = await auth.signInWithEmailAndPassword(email, password);
-      console.log('User logged in:', userCredential.user.uid);
+      await auth.signInWithEmailAndPassword(email, password);
     }
 
-    // Show success message
     authForm.style.display = 'none';
     authSuccess.classList.add('show');
 
-    // Redirect to dashboard
     setTimeout(() => {
       window.location.href = 'dashboard/index.html';
-    }, 2000);
+    }, 1500);
 
   } catch (error) {
-    console.error('Auth error:', error);
     
     let errorMessage = 'An error occurred. Please try again.';
     
